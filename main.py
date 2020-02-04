@@ -130,6 +130,7 @@ def run(flags_obj, datasets_override=None, strategy_override=None):
   num_eval_steps = num_eval_examples // flags_obj.batch_size
 
   print("Starting Training......")
+  print("Epochs:", train_epochs)
   history = model.fit(
       train_input_dataset,
       epochs=train_epochs,
@@ -138,7 +139,7 @@ def run(flags_obj, datasets_override=None, strategy_override=None):
       validation_steps=num_eval_steps,
       validation_data=eval_input_dataset,
       validation_freq=flags_obj.epochs_between_evals,
-      verbose=2)
+      verbose=0)
 
   export_path = os.path.join(flags_obj.model_dir, 'saved_model')
   model.save(export_path, include_optimizer=False)
@@ -168,14 +169,8 @@ def define_mnist_flags():
 
 
 def main(_):
-  # flags.FLAGS.download = True  # Download MNIST dataset
-  # Distributuion strategies:
+  # Distributuion strategies flags:
   # https://github.com/tensorflow/models/blob/master/official/utils/misc/distribution_utils.py#L84
-  #flags.FLAGS.distribution_strategy = "tpu"
-  # flags.FLAGS.tpu = "grpc://localhost:2000"
-  # flags.FLAGS.model_dir = "gs://dnn-bucket/my-tcp-run"
-  # flags.FLAGS.data_dir = "gs://dnn-bucket/mnist"
-  # flags.FLAGS.train_epochs = 2
 
   model_helpers.apply_clean(FLAGS)
   stats = run(flags.FLAGS)

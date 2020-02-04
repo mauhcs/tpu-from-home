@@ -6,6 +6,6 @@ time GOOGLE_APPLICATION_CREDENTIALS=$1 \
     --tpu "grpc://localhost:2000" \
     --model_dir "gs://dnn-bucket/my-tcp-run" \
     --data_dir "gs://dnn-bucket/mnist" \
-    --train_epochs 50 \
+    --train_epochs 100 \
     --download \
     --no_callbacks

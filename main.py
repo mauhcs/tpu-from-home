@@ -117,15 +117,19 @@ def run(flags_obj, datasets_override=None, strategy_override=None):
   train_epochs = flags_obj.train_epochs
 
   ckpt_full_path = os.path.join(flags_obj.model_dir, 'model.ckpt-{epoch:04d}')
-  callbacks = [
-      tf.keras.callbacks.ModelCheckpoint(
-          ckpt_full_path, save_weights_only=True),
-      tf.keras.callbacks.TensorBoard(log_dir=flags_obj.model_dir),
-  ]
+  callbacks = []
+  if not flags_obj.no_callbacks:
+    callbacks.extend([
+        tf.keras.callbacks.ModelCheckpoint(
+            ckpt_full_path, save_weights_only=True),
+        tf.keras.callbacks.TensorBoard(log_dir=flags_obj.model_dir),
+    ])
+
 
   num_eval_examples = mnist.info.splits['test'].num_examples
   num_eval_steps = num_eval_examples // flags_obj.batch_size
 
+  print("Starting Training......")
   history = model.fit(
       train_input_dataset,
       epochs=train_epochs,
@@ -133,7 +137,8 @@ def run(flags_obj, datasets_override=None, strategy_override=None):
       callbacks=callbacks,
       validation_steps=num_eval_steps,
       validation_data=eval_input_dataset,
-      validation_freq=flags_obj.epochs_between_evals)
+      validation_freq=flags_obj.epochs_between_evals,
+      verbose=2)
 
   export_path = os.path.join(flags_obj.model_dir, 'saved_model')
   model.save(export_path, include_optimizer=False)
@@ -155,20 +160,22 @@ def define_mnist_flags():
       distribution_strategy=True)
   flags_core.define_device()
   flags_core.define_distribution()
+  flags.DEFINE_bool('no_callbacks', False,
+                    'Whether to save weights and tensorborad logs between epochs.')
   flags.DEFINE_bool('download', False,
                     'Whether to download data to `--data_dir`.')
   FLAGS.set_default('batch_size', 1024)
 
 
 def main(_):
-  flags.FLAGS.download = True  # Download MNIST dataset
+  # flags.FLAGS.download = True  # Download MNIST dataset
   # Distributuion strategies:
   # https://github.com/tensorflow/models/blob/master/official/utils/misc/distribution_utils.py#L84
-  flags.FLAGS.distribution_strategy = "tpu"
-  flags.FLAGS.tpu = "grpc://localhost:2000"
-  flags.FLAGS.model_dir = "gs://dnn-bucket/my-tcp-run"
-  flags.FLAGS.data_dir = "gs://dnn-bucket/mnist"
-  flags.FLAGS.train_epochs = 2
+  #flags.FLAGS.distribution_strategy = "tpu"
+  # flags.FLAGS.tpu = "grpc://localhost:2000"
+  # flags.FLAGS.model_dir = "gs://dnn-bucket/my-tcp-run"
+  # flags.FLAGS.data_dir = "gs://dnn-bucket/mnist"
+  # flags.FLAGS.train_epochs = 2
 
   model_helpers.apply_clean(FLAGS)
   stats = run(flags.FLAGS)
